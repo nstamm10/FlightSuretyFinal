@@ -42,7 +42,7 @@ contract FlightSuretyData {
     mapping(address => uint256) private authorizedAirlines;   // Mapping for airlines authorized
     Insurance[] private insurance;
     mapping(address => uint256) private credit;
-
+    mapping(address => uint256) funds;
     mapping(address => uint256) private voteCounter;
 
     mapping(address => bool) private authorizedCallers;
@@ -56,6 +56,7 @@ contract FlightSuretyData {
     * searchable by event log filters. A maximum of three parameters may use the indexed keyword per event.
     */
     event RegisterAirline(address indexed account);
+    event AuthorizeAirline(address account);
 
     /**
     * @dev Constructor
@@ -255,6 +256,7 @@ contract FlightSuretyData {
                             external
                             pure
     {
+
     }
 
    /**
@@ -264,10 +266,30 @@ contract FlightSuretyData {
     */
     function fund
                             (
+                              address sender
                             )
                             public
                             payable
+                            //requireAuthorizedCaller (app contract)
+                            //isRegistered?
+                            //requireIsOperational
+                            //checkValue at least X ether
+                            //return change
     {
+        uint256 existingAmount = funds[sender];
+        uint256 totalAmount = existingAmount.add(msg.value);
+        funds[sender] = 0;
+
+        sender.transfer(totalAmount);
+
+        if (airlines[sender].isAuthorized == false) {
+            airlines[sender].isAuthorized = true;
+            authorizedAirlineCount = authorizedAirlineCount.add(1);
+            emit AuthorizeAirline(sender);
+        }
+        funds[sender] = totalAmount;
+
+
     }
 
     function getFlightKey
