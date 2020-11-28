@@ -1,13 +1,14 @@
 
 var Test = require('../config/testConfig.js');
 var BigNumber = require('bignumber.js');
+const TruffleAssert = require('../node_modules/truffle-assertions/index.js');
 
 contract('Flight Surety Tests', async (accounts) => {
 
   var config;
   before('setup contract', async () => {
     config = await Test.Config(accounts);
-    await config.flightSuretyData.authorizeCaller(config.flightSuretyApp.address);
+    //await config.flightSuretyData.authorizeCaller(config.flightSuretyApp.address);
   });
 
   /****************************************************************************************/
@@ -18,6 +19,19 @@ contract('Flight Surety Tests', async (accounts) => {
     //get operating status
     let status = await config.flightSuretyData.isOperational.call();
     assert.equal(status, true, "Incorrect initial operating status value");
+  });
+
+  it('consumer can buy insurance', async function() {
+      let flight = 'United flight 280';
+      let consumer = accounts[1];
+      let buyAmount = 500000000000000000;
+      let airline = accounts[2];
+      let time = Date.now()
+
+      let buy = await config.flightSuretyData.buy(airline, flight, time, buyAmount.toString(), {from: consumer, value: buyAmount.toString()});
+
+      TruffleAssert.eventEmitted(buy, 'Bought');
+
   });
 
 
