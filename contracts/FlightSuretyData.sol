@@ -22,18 +22,18 @@ contract FlightSuretyData {
 
     struct Airline {  //Struct to classify an airline and hold relevant info
         string name;
-        string abbreviation;
+        address account;
         bool isRegistered;
-        bool isAuthorized
-        bool operationalVote = true;
+        bool isAuthorized;
+        bool operationalVote;
     }
 
-    address[] multiCalls = new address[](0);
+
    //constant M refers to number of airlines needed to use multi-party consensus
-   uint8 changeOperatingStatusVotes = 0;
+    uint256 private changeOperatingStatusVotes = 0;
 
     uint statusVotes;
-    uint8 private authorizedAirlineCount = 0;
+    uint256 private authorizedAirlineCount = 0;
     mapping (address => mapping(address => uint8)) private multiCalls;
     address[] multiCallsArray = new address[](0);   //array of addresses that have called the registerFlight function
 
@@ -117,6 +117,10 @@ contract FlightSuretyData {
         return operational;
     }
 
+    function getAirlineName(address account) public view returns(string){
+        return airlines[account].name;
+    }
+
 
     /**
     * @dev Sets contract operations on/off
@@ -169,16 +173,17 @@ contract FlightSuretyData {
                             returns
                             (
                                 bool success,
-                                uint8 authorizedAirlineCount,
+                                uint256 authorizedAirlineNumber,
                                 uint256 votes
                             )
     {
-      if authorizedAirlineCount < 4 {
+      if (authorizedAirlineCount < 4) {
         airlines[newAirline] = Airline({
                     name: name,
                     account: newAirline,
-                    isRegisterd: true,
+                    isRegistered: true,
                     isAuthorized: true,
+                    operationalVote: true
                     });
 
         emit RegisterAirline(newAirline);
@@ -190,7 +195,7 @@ contract FlightSuretyData {
           isDuplicate = true;
         }
 
-        require(!isDuplicate, "Caller has already called this function")
+        require(!isDuplicate, "Caller has already called this function");
         multiCalls[newAirline][caller] = 1;
         voteCounter[newAirline] = voteCounter[newAirline].add(1);
 
@@ -198,11 +203,16 @@ contract FlightSuretyData {
           airlines[newAirline] = Airline({
                       name: name,
                       account: newAirline,
-                      isRegisterd: true,
+                      isRegistered: true,
                       isAuthorized: true,
+                      operationalVote: true
                       });
 
           emit RegisterAirline(newAirline);
+
+          return(true, authorizedAirlineCount, voteCounter[newAirline]);
+        } else {
+          return(false, authorizedAirlineCount, voteCounter[newAirline]);
         }
 
       }
