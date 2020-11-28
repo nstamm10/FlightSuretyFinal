@@ -9,9 +9,39 @@ contract FlightSuretyData {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
-    address private contractOwner;                                      // Account used to deploy contract
-    bool private operational = true;                                    // Blocks all state changes throughout the contract if false
+    address private contractOwner;                    // Account used to deploy contract
+    bool private operational = true;                 // Blocks all state changes throughout the contract if false
 
+    uint private funds;
+
+    struct Insurance {
+        address owner;
+        bytes32 key;
+        uint256 amount;
+    }
+
+    struct Airline {  //Struct to classify an airline and hold relevant info
+        string name;
+        string abbreviation;
+        bool isRegistered;
+        bool isAuthorized;
+    }
+
+   //constant M refers to number of airlines needed to use multi-party consensus
+
+
+    uint private registeredAirlineCount = 0;
+    mapping (address => mapping(address => bool)) private multiCalls;
+    address[] multiCallsArray = new address[](0);   //array of addresses that have called the registerFlight function
+
+
+    mapping(address => Airline) public airlines;      // Mapping for storing employees. Question: Does this contract have to inheret from the app contract in order to use a mapping that maps to an Airline type? (airline type is stored in the app contract, maybe this will have to change)
+    mapping(address => uint256) private authorizedAirlines;   // Mapping for airlines authorized
+    Insurance[] private insurance;
+    mapping(address => uint256) private credit;
+
+    mapping(address => uint256) private voteCounter;
+    mapping(address => bool) private authorizedCallers;
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -23,8 +53,8 @@ contract FlightSuretyData {
     */
     constructor
                                 (
-                                ) 
-                                public 
+                                )
+                                public
     {
         contractOwner = msg.sender;
     }
@@ -38,10 +68,10 @@ contract FlightSuretyData {
 
     /**
     * @dev Modifier that requires the "operational" boolean variable to be "true"
-    *      This is used on all state changing functions to pause the contract in 
+    *      This is used on all state changing functions to pause the contract in
     *      the event there is an issue that needs to be fixed
     */
-    modifier requireIsOperational() 
+    modifier requireIsOperational()
     {
         require(operational, "Contract is currently not operational");
         _;  // All modifiers require an "_" which indicates where the function body will be added
@@ -56,6 +86,10 @@ contract FlightSuretyData {
         _;
     }
 
+    //modifier isAuthorized(Airline air) {
+        //require(air.authorized);
+    //}
+
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
@@ -64,11 +98,11 @@ contract FlightSuretyData {
     * @dev Get operating status of contract
     *
     * @return A bool that is the current operating status
-    */      
-    function isOperational() 
-                            public 
-                            view 
-                            returns(bool) 
+    */
+    function isOperational()
+                            public
+                            view
+                            returns(bool)
     {
         return operational;
     }
@@ -78,13 +112,13 @@ contract FlightSuretyData {
     * @dev Sets contract operations on/off
     *
     * When operational mode is disabled, all write transactions except for this one will fail
-    */    
+    */
     function setOperatingStatus
                             (
                                 bool mode
-                            ) 
+                            )
                             external
-                            requireContractOwner 
+                            //isAuthorized
     {
         operational = mode;
     }
@@ -97,9 +131,9 @@ contract FlightSuretyData {
     * @dev Add an airline to the registration queue
     *      Can only be called from FlightSuretyApp contract
     *
-    */   
+    */
     function registerAirline
-                            (   
+                            (
                             )
                             external
                             pure
@@ -110,9 +144,9 @@ contract FlightSuretyData {
    /**
     * @dev Buy insurance for a flight
     *
-    */   
+    */
     function buy
-                            (                             
+                            (
                             )
                             external
                             payable
@@ -130,7 +164,7 @@ contract FlightSuretyData {
                                 pure
     {
     }
-    
+
 
     /**
      *  @dev Transfers eligible payout funds to insuree
@@ -148,9 +182,9 @@ contract FlightSuretyData {
     * @dev Initial funding for the insurance. Unless there are too many delayed flights
     *      resulting in insurance payouts, the contract should be self-sustaining
     *
-    */   
+    */
     function fund
-                            (   
+                            (
                             )
                             public
                             payable
@@ -165,7 +199,7 @@ contract FlightSuretyData {
                         )
                         pure
                         internal
-                        returns(bytes32) 
+                        returns(bytes32)
     {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
@@ -174,13 +208,12 @@ contract FlightSuretyData {
     * @dev Fallback function for funding smart contract.
     *
     */
-    function() 
-                            external 
-                            payable 
+    function()
+                            external
+                            payable
     {
         fund();
     }
 
 
 }
-
