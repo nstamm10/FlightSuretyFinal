@@ -7,7 +7,7 @@ contract('Flight Surety Tests', async (accounts) => {
   var config;
   before('setup contract', async () => {
     config = await Test.Config(accounts);
-    await config.flightSuretyData.authorizeCaller(config.flightSuretyApp.address);
+//    await config.flightSuretyData.authorizeCaller(config.flightSuretyApp.address);
   });
 
   /****************************************************************************************/
@@ -19,6 +19,60 @@ contract('Flight Surety Tests', async (accounts) => {
     let status = await config.flightSuretyData.isOperational.call();
     assert.equal(status, true, "Incorrect initial operating status value");
   });
+
+  it('setOperatingStatus requires authorizedAirline to call function', async function() {
+
+
+
+  });
+
+  it('setOperatingStatus can change operating status to desired mode IF less than 4 authorized Airlines', async function() {
+
+
+
+  });
+
+  it('setOperatingStatus will change operating status to false IF 50% consensus is reached for 4 or more authorized Airlines', async function() {
+
+    //register 5 airlines
+
+    //call change operating status 3 times for three different planes
+
+    //assert should indicate that first two times, operational variable does not change
+    //assert should indicate that the third time, operational variable should change to false
+    //also, changeOperatingStatusVotes variable should go to two (two votes for true now)
+
+
+  });
+
+  it('setOperatingStatus will change operating status back to true in the same scenario as above', async function() {
+
+    //call change operating status 1 time for airline that had previously set vote to false
+
+    //assert should indicate that operational variable should change back to false
+    //also, changeOperatingStatusVotes variable should go back to two (two votes for false now)
+
+    //call change operaing status on other two airlines set to false and make sure changeOperatingStatusVotes
+    //lines up as it should  -- this could be a bug here
+    //do I need line 129?
+    //how do i make sure the variable changeOperatingStatus works as intended
+
+
+  });
+
+  it('setOperatingStatus will reject duplicate callers', async function() {
+
+    //assert that operating status is currently set to true
+    //check operating stauts field of all airlines so that they are set to true
+
+    //call change operating status -- should work but operational variable should not change
+    //assert should not change
+
+    //call change operating status(false) again with the same airline
+    //assert should reject
+
+  });
+
 
 
 });

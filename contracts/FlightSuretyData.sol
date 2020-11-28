@@ -24,14 +24,17 @@ contract FlightSuretyData {
         string name;
         string abbreviation;
         bool isRegistered;
-        bool isAuthorized;
+        bool isAuthorized
+        bool operationalVote = true;
     }
 
+    address[] multiCalls = new address[](0);
    //constant M refers to number of airlines needed to use multi-party consensus
+   uint8 changeOperatingStatusVotes = 0;
 
-
-    uint private registeredAirlineCount = 0;
-    mapping (address => mapping(address => bool)) private multiCalls;
+    uint statusVotes;
+    uint8 private authorizedAirlineCount = 0;
+    mapping (address => mapping(address => uint8)) private multiCalls;
     address[] multiCallsArray = new address[](0);   //array of addresses that have called the registerFlight function
 
 
@@ -41,11 +44,18 @@ contract FlightSuretyData {
     mapping(address => uint256) private credit;
 
     mapping(address => uint256) private voteCounter;
+
     mapping(address => bool) private authorizedCallers;
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
 
+    /**
+    * Event fired when a new Airline is registered
+    * "indexed" keyword indicates that the data should be stored as a "topic" in event log data. This makes it
+    * searchable by event log filters. A maximum of three parameters may use the indexed keyword per event.
+    */
+    event RegisterAirline(address indexed account);
 
     /**
     * @dev Constructor
@@ -115,13 +125,28 @@ contract FlightSuretyData {
     */
     function setOperatingStatus
                             (
-                                bool mode
+                                bool mode,
+                                address caller
                             )
                             external
                             requireContractOwner
                             //isAuthorized
     {
-        operational = mode;
+        require(operational == airlines[caller].operationalVote, "Duplicate caller");
+        require(mode!=operational, "New mode must be different from existing mode");
+
+
+        if (authorizedAirlineCount < 4) {
+          operational = mode;
+        } else { //use multi-party consensus amount authorized airlines to reach 50% aggreement
+          changeOperatingStatusVotes = changeOperatingStatusVotes.add(1);
+          airlines[caller].operationalVote = mode;
+          if (changeOperatingStatusVotes >= (authorizedAirlineCount.div(2))) {
+            operational = mode;
+            changeOperatingStatusVotes = authorizedAirlineCount - changeOperatingStatusVotes;
+          }
+        }
+
     }
 
     /********************************************************************************************/
@@ -135,10 +160,53 @@ contract FlightSuretyData {
     */
     function registerAirline
                             (
+                              string name,
+                              address newAirline,
+                              address caller
                             )
                             external
-                            pure
+                            //isAuthorized(caller)
+                            returns
+                            (
+                                bool success,
+                                uint8 authorizedAirlineCount,
+                                uint256 votes
+                            )
     {
+      if authorizedAirlineCount < 4 {
+        airlines[newAirline] = Airline({
+                    name: name,
+                    account: newAirline,
+                    isRegisterd: true,
+                    isAuthorized: true,
+                    });
+
+        emit RegisterAirline(newAirline);
+        return(true, authorizedAirlineCount, 1);
+      } else { //multiparty consensus
+        bool isDuplicate = false;
+        //better to use an owner parameter than msg.sender here?
+        if (multiCalls[newAirline][caller] == 1) {
+          isDuplicate = true;
+        }
+
+        require(!isDuplicate, "Caller has already called this function")
+        multiCalls[newAirline][caller] = 1;
+        voteCounter[newAirline] = voteCounter[newAirline].add(1);
+
+        if (voteCounter[newAirline] >= (authorizedAirlineCount.div(2))) {
+          airlines[newAirline] = Airline({
+                      name: name,
+                      account: newAirline,
+                      isRegisterd: true,
+                      isAuthorized: true,
+                      });
+
+          emit RegisterAirline(newAirline);
+        }
+
+      }
+
     }
 
 
