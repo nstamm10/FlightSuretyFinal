@@ -34,6 +34,8 @@ contract FlightSuretyApp {
     }
     mapping(bytes32 => Flight) private flights;
 
+    FlightSuretyData flightSuretyData;
+
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -73,11 +75,12 @@ contract FlightSuretyApp {
     */
     constructor
                                 (
-
+                                  address dataAddress
                                 )
                                 public
     {
         contractOwner = msg.sender;
+        flightSuretyData = FlightSuretyData(dataAddress);
     }
 
     /********************************************************************************************/
@@ -334,5 +337,12 @@ contract FlightSuretyApp {
     }
 
 // endregion
+}
 
-}   
+/********************************************************************************************/
+/*                                    DATA CONTRACT INTERFACE                               */
+/********************************************************************************************/
+
+contract FlightSuretyData {
+
+}

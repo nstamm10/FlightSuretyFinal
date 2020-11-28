@@ -118,6 +118,7 @@ contract FlightSuretyData {
                                 bool mode
                             )
                             external
+                            requireContractOwner
                             //isAuthorized
     {
         operational = mode;
