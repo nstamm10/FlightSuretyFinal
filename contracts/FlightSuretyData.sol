@@ -9,10 +9,39 @@ contract FlightSuretyData {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
-    address private contractOwner;                                      // Account used to deploy contract
-    bool private operational = true;                                    // Blocks all state changes throughout the contract if false
- 
+    address private contractOwner;                    // Account used to deploy contract
+    bool private operational = true;                 // Blocks all state changes throughout the contract if false
 
+    uint private funds;
+
+    struct Insurance {
+        address owner;
+        bytes32 key;
+        uint256 amount;
+    }
+
+    struct Airline {  //Struct to classify an airline and hold relevant info
+        string name;
+        string abbreviation;
+        bool isRegistered;
+        bool isAuthorized;
+    }
+
+   //constant M refers to number of airlines needed to use multi-party consensus
+
+
+    uint private registeredAirlineCount = 0;
+    mapping (address => mapping(address => bool)) private multiCalls;
+    address[] multiCallsArray = new address[](0);   //array of addresses that have called the registerFlight function
+
+
+    mapping(address => Airline) public airlines;      // Mapping for storing employees. Question: Does this contract have to inheret from the app contract in order to use a mapping that maps to an Airline type? (airline type is stored in the app contract, maybe this will have to change)
+    mapping(address => uint256) private authorizedAirlines;   // Mapping for airlines authorized
+    Insurance[] private insurance;
+    mapping(address => uint256) private credit;
+
+    mapping(address => uint256) private voteCounter;
+    mapping(address => bool) private authorizedCallers;
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -57,6 +86,10 @@ contract FlightSuretyData {
         _;
     }
 
+    //modifier isAuthorized(Airline air) {
+        //require(air.authorized);
+    //}
+
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
@@ -86,6 +119,7 @@ contract FlightSuretyData {
                             )
                             external
                             requireContractOwner
+                            //isAuthorized
     {
         operational = mode;
     }
