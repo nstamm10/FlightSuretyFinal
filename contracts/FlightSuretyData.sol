@@ -12,8 +12,6 @@ contract FlightSuretyData {
     address private contractOwner;                    // Account used to deploy contract
     bool private operational = true;                 // Blocks all state changes throughout the contract if false
 
-    uint private funds;
-
     struct Insurance {
         address owner;
         bytes32 key;
@@ -37,12 +35,11 @@ contract FlightSuretyData {
     mapping (address => mapping(address => uint8)) private multiCalls;
     address[] multiCallsArray = new address[](0);   //array of addresses that have called the registerFlight function
 
-
+    mapping(address => uint256) funds;
     mapping(address => Airline) public airlines;      // Mapping for storing employees. Question: Does this contract have to inheret from the app contract in order to use a mapping that maps to an Airline type? (airline type is stored in the app contract, maybe this will have to change)
     mapping(address => uint256) private authorizedAirlines;   // Mapping for airlines authorized
     Insurance[] private insurance;
     mapping(address => uint256) private credit;
-    mapping(address => uint256) funds;
     mapping(address => uint256) private voteCounter;
 
     mapping(address => bool) private authorizedCallers;
@@ -69,7 +66,18 @@ contract FlightSuretyData {
     {
         contractOwner = msg.sender;
 
-        
+        airlines[contractOwner] = Airline({
+                    name: "Default Name",
+                    account: contractOwner,
+                    isRegistered: true,
+                    isAuthorized: true,
+                    operationalVote: true
+                    });
+
+        authorizedAirlineCount = authorizedAirlineCount.add(1);
+
+        emit RegisterAirline(contractOwner);
+
     }
 
     /********************************************************************************************/
@@ -121,9 +129,24 @@ contract FlightSuretyData {
         return operational;
     }
 
-    function getAirlineName(address account) public view returns(string){
+    //getters for fields of the Airline struct -- don
+
+    function getAirlineName(address account) external view returns(string){
         return airlines[account].name;
     }
+    function getAirlineAccount(address account) external view returns(address){
+        return airlines[account].account;
+    }
+    function getRegistrationStatus(address account) external view returns(bool){
+        return airlines[account].isRegistered;
+    }
+    function getAuthorizationStatus(address account) external view returns(bool){
+        return airlines[account].isAuthorized;
+    }
+    function getOperationalVote(address account) external view returns(bool){
+        return airlines[account].operationalVote;
+    }
+
 
 
     /**
@@ -138,7 +161,7 @@ contract FlightSuretyData {
                             )
                             external
                             requireContractOwner
-                            //isAuthorized
+                            isAuthorized(airlines[caller])
     {
         require(operational == airlines[caller].operationalVote, "Duplicate caller");
         require(mode!=operational, "New mode must be different from existing mode");
@@ -170,10 +193,10 @@ contract FlightSuretyData {
                             (
                               string name,
                               address newAirline,
-                              address caller
+                              address admin
                             )
                             external
-                            //isAuthorized(caller)
+                          //  isAuthorized(airlines[admin])
                             returns
                             (
                                 bool success,
@@ -186,7 +209,7 @@ contract FlightSuretyData {
                     name: name,
                     account: newAirline,
                     isRegistered: true,
-                    isAuthorized: true,
+                    isAuthorized: false,
                     operationalVote: true
                     });
 
@@ -195,12 +218,12 @@ contract FlightSuretyData {
       } else { //multiparty consensus
         bool isDuplicate = false;
         //better to use an owner parameter than msg.sender here?
-        if (multiCalls[newAirline][caller] == 1) {
+        if (multiCalls[newAirline][admin] == 1) {
           isDuplicate = true;
         }
 
         require(!isDuplicate, "Caller has already called this function");
-        multiCalls[newAirline][caller] = 1;
+        multiCalls[newAirline][admin] = 1;
         voteCounter[newAirline] = voteCounter[newAirline].add(1);
 
         if (voteCounter[newAirline] >= (authorizedAirlineCount.div(2))) {
@@ -316,7 +339,7 @@ contract FlightSuretyData {
                             external
                             payable
     {
-        fund();
+        fund(msg.sender);
     }
 
 
