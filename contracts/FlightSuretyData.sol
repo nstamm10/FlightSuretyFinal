@@ -131,6 +131,7 @@ contract FlightSuretyData {
 
     //getters for fields of the Airline struct -- don
 
+
     function getAirlineName(address account) external view returns(string){
         return airlines[account].name;
     }
@@ -204,6 +205,9 @@ contract FlightSuretyData {
                                 uint256 votes
                             )
     {
+
+
+
       if (authorizedAirlineCount < 4) {
         airlines[newAirline] = Airline({
                     name: name,
@@ -212,7 +216,6 @@ contract FlightSuretyData {
                     isAuthorized: false,
                     operationalVote: true
                     });
-
         emit RegisterAirline(newAirline);
         return(true, authorizedAirlineCount, 1);
       } else { //multiparty consensus
