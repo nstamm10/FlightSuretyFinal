@@ -68,6 +68,8 @@ contract FlightSuretyData {
                                 public
     {
         contractOwner = msg.sender;
+
+        
     }
 
     /********************************************************************************************/
@@ -97,9 +99,10 @@ contract FlightSuretyData {
         _;
     }
 
-    //modifier isAuthorized(Airline air) {
-        //require(air.authorized);
-    //}
+    modifier isAuthorized(Airline air) {
+        require(air.isAuthorized, "Airline is not authorized to participate in this function");
+        _;
+    }
 
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
