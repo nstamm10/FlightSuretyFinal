@@ -345,7 +345,7 @@ contract FlightSuretyApp {
   function getOperationalVote(address account) external view returns(bool) {
       return flightSuretyData.getOperationalVote(account);
   }
-  function registerAirline(string name, address newAirline, address admin) external returns(bool, uint256, uint256){
+  function registerAirline(string name, address newAirline, address admin) external view returns(bool, uint256, uint256){
       return flightSuretyData.registerAirline(name, newAirline, admin);
   }
 
@@ -368,5 +368,5 @@ contract FlightSuretyData {
     function getAuthorizationStatus(address airline) external view returns(bool){}
     function getOperationalVote(address airline) external view returns(bool){}
     function isOperational() external view returns(bool){}
-    function registerAirline(string name, address newAirline, address admin) external returns(bool, uint256, uint256){}
+    function registerAirline(string name, address newAirline, address admin) external view returns(bool, uint256, uint256){}
 }

@@ -117,7 +117,7 @@ contract FlightSuretyData {
     }
 
     modifier isAuthorized(address airline) {
-        require(airlines[airline].authorized, "Airline is not authorized");
+        require(airlines[airline].isAuthorized, "Airline is not authorized");
 
         _;
     }
@@ -211,7 +211,6 @@ contract FlightSuretyData {
                               address admin
                             )
                             external
-
                             view
                             requireIsOperational
 
@@ -291,7 +290,7 @@ contract FlightSuretyData {
         for (uint i=0; i < insurance.length; i++) {
             if (insurance[i].key == flightKey) {
                 credit[insurance[i].owner] = insurance[i].amount.mul(15).div(10);
-                Insurance insur = insurance[i];
+                Insurance memory insur = insurance[i];
                 insurance[i] = insurance[insurance.length - 1];
                 insurance[insurance.length - 1] = insur;
                 delete insurance[insurance.length - 1];
