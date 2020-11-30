@@ -86,7 +86,7 @@ contract FlightSuretyApp {
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
-
+/*
     function isOperational()
                             public
                             pure
@@ -94,25 +94,11 @@ contract FlightSuretyApp {
     {
         return true;  // Modify to call data contract's status
     }
-
+*/
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
-
-   /**
-    * @dev Add an airline to the registration queue
-    *
-    */
-    function registerAirline
-                            (
-                            )
-                            external
-                            pure
-                            returns(bool success, uint256 votes)
-    {
-        return (success, 0);
-    }
 
 
    /**
@@ -337,12 +323,50 @@ contract FlightSuretyApp {
     }
 
 // endregion
-}
 
+/********************************************************************************************/
+/*                                DATA CONTRACT ENCAPSULATIONS                              */
+/********************************************************************************************/
+
+
+  // region FlightSuretyData encapsulations
+  function getAirlineName(address account) external view returns(string) {
+      return flightSuretyData.getAirlineName(account);
+  }
+  function getAirlineAccount(address account) external view returns(address) {
+      return flightSuretyData.getAirlineAccount(account);
+  }
+  function getRegistrationStatus(address account) external view returns(bool) {
+      return flightSuretyData.getRegistrationStatus(account);
+  }
+  function getAuthorizationStatus(address account) external view returns(bool) {
+      return flightSuretyData.getAuthorizationStatus(account);
+  }
+  function getOperationalVote(address account) external view returns(bool) {
+      return flightSuretyData.getOperationalVote(account);
+  }
+  function registerAirline(string name, address newAirline, address admin) external view returns(bool, uint256, uint256){
+      return flightSuretyData.registerAirline(name, newAirline, admin);
+  }
+
+  //utility function
+  function isOperational() external view returns(bool) {
+      return flightSuretyData.isOperational();
+  }
+
+
+}
 /********************************************************************************************/
 /*                                    DATA CONTRACT INTERFACE                               */
 /********************************************************************************************/
 
 contract FlightSuretyData {
 
+    function getAirlineName(address airline) external view returns(string){}
+    function getAirlineAccount(address airline) external view returns(address){}
+    function getRegistrationStatus(address airline) external view returns(bool){}
+    function getAuthorizationStatus(address airline) external view returns(bool){}
+    function getOperationalVote(address airline) external view returns(bool){}
+    function isOperational() external view returns(bool){}
+    function registerAirline(string name, address newAirline, address admin) external view returns(bool, uint256, uint256){}
 }
