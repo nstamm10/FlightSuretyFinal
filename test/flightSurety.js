@@ -56,26 +56,26 @@ contract('Flight Surety Tests', async (accounts) => {
     let airline = config.firstAirline; // should be already authorized as a participating airline
 
     //This should work and return true, 1, 1
-    let register = await config.flightSuretyApp.registerAirline("American Airlines", newAirline, airline);
-
-    //check that registerAirline function is returning the correct three fields for this particular case
-    assert.equal(register[0], true, "Incorrect registry status of new Airline");
-    assert.equal(register[1].toString() === "1", true, "Incorrect number of Authorized Airlines");
-    assert.equal(register[2].toString() === "1", true, "Incorrect number of votes");
+    let register = await config.flightSuretyApp.registerAirline.sendTransaction("American Airlines", newAirline, airline);
 
     //check all 5 fields of new airline
     let name = await config.flightSuretyApp.getAirlineName(newAirline);
-//    let account = await config.flightSuretyApp.getAirlineAccount(newAirline);
-  //  let isRegistered = await config.flightSuretyApp.getRegistrationStatus(newAirline);
-//    let isAuthorized = await config.flightSuretyApp.getAuthorizationStatus(newAirline)
-  //  let operationalVote = await config.flightSuretyApp.getOperationalVote(newAirline);
+    let account = await config.flightSuretyApp.getAirlineAccount(newAirline);
+    let isRegistered = await config.flightSuretyApp.getRegistrationStatus(newAirline);
+    let isAuthorized = await config.flightSuretyApp.getAuthorizationStatus(newAirline)
+    let operationalVote = await config.flightSuretyApp.getOperationalVote(newAirline);
 
-    assert.equal(name.toString(), "American Airlines", "Incorrect name of registered airline 1");
-/*    assert.equal(account, newAirline, "Incorrect account of registered airline 1");
+    assert.equal(name, "American Airlines", name.toString());
+    assert.equal(account, newAirline, "Incorrect account of registered airline 1");
     assert.equal(isRegistered, true, "Incorrect registration status of registered airline 1");
     assert.equal(isAuthorized, false, "Incorrect authorization status of registered airline 1");
-    assert.equal(operationalVoteDefault, true, "Incorrect operational vote of registered airline 1");
-*/
+    assert.equal(operationalVote, true, "Incorrect operational vote of registered airline 1");
+
+    //check that registerAirline function is returning the correct three fields for this particular case
+    assert.equal(register, true, register);
+    assert.equal(register[1].toString() === "1", true, "Incorrect number of Authorized Airlines");
+    assert.equal(register[2].toString() === "1", true, "Incorrect number of votes");
+
 
 
 
@@ -83,7 +83,6 @@ contract('Flight Surety Tests', async (accounts) => {
 
   it( 'isOperational function returns default isOperational() value', async function() {
 
-<<<<<<< Updated upstream
     //get operating status
     let status = await config.flightSuretyData.isOperational.call();
     assert.equal(status, true, "Incorrect initial operating status value");
@@ -247,8 +246,3 @@ contract('Flight Surety Tests', async (accounts) => {
 <<<<<<< Updated upstream
 =======
   */
->>>>>>> Stashed changes
-
-
-});
-*/
