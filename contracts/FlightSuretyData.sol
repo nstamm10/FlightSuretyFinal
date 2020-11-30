@@ -12,8 +12,6 @@ contract FlightSuretyData {
     address private contractOwner;                    // Account used to deploy contract
     bool private operational = true;                 // Blocks all state changes throughout the contract if false
 
-    uint private funds;
-
     struct Insurance {
         address owner;
         bytes32 key;
@@ -22,31 +20,49 @@ contract FlightSuretyData {
 
     struct Airline {  //Struct to classify an airline and hold relevant info
         string name;
-        string abbreviation;
-        bool registered;
-        bool authorized;
+        address account;
+        bool isRegistered;
+        bool isAuthorized;
+        bool operationalVote;
+
     }
 
+
    //constant M refers to number of airlines needed to use multi-party consensus
+    uint256 private changeOperatingStatusVotes = 0;
 
 
-    uint private authorizedAirlines = 1;
-    mapping (address => mapping(address => bool)) private multiCalls;
+    uint statusVotes;
+    uint256 private authorizedAirlineCount = 0;
+    mapping (address => mapping(address => uint8)) private multiCalls;
     address[] multiCallsArray = new address[](0);   //array of addresses that have called the registerFlight function
 
+    mapping(address => uint256) funds;
+    mapping(address => Airline) public airlines;      // Mapping for storing employees. Question: Does this contract have to inheret from the app contract in order to use a mapping that maps to an Airline type? (airline type is stored in the app contract, maybe this will have to change)
+    mapping(address => uint256) private authorizedAirlines;   // Mapping for airlines authorized
 
-    mapping(address => Airline) public airlines;
     Insurance[] private insurance;
     mapping(address => uint256) private credit;
-
     mapping(address => uint256) private voteCounter;
+
     mapping(address => bool) private authorizedCallers;
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
+
     event Bought(address buyer, bytes32 flightKey, uint256 amount);
     event Creditted(bytes32 flightKey);
     event Paid(address insuree, uint256 amount);
+
+
+    /**
+    * Event fired when a new Airline is registered
+    * "indexed" keyword indicates that the data should be stored as a "topic" in event log data. This makes it
+    * searchable by event log filters. A maximum of three parameters may use the indexed keyword per event.
+    */
+    event RegisterAirline(address indexed account);
+    event AuthorizeAirline(address account);
+
 
     /**
     * @dev Constructor
@@ -58,6 +74,19 @@ contract FlightSuretyData {
                                 public
     {
         contractOwner = msg.sender;
+
+        airlines[contractOwner] = Airline({
+                    name: "Default Name",
+                    account: contractOwner,
+                    isRegistered: true,
+                    isAuthorized: true,
+                    operationalVote: true
+                    });
+
+        authorizedAirlineCount = authorizedAirlineCount.add(1);
+
+        emit RegisterAirline(contractOwner);
+
     }
 
     /********************************************************************************************/
@@ -89,6 +118,7 @@ contract FlightSuretyData {
 
     modifier isAuthorized(address airline) {
         require(airlines[airline].authorized, "Airline is not authorized");
+
         _;
     }
 
@@ -109,6 +139,26 @@ contract FlightSuretyData {
         return operational;
     }
 
+    //getters for fields of the Airline struct -- don
+
+
+    function getAirlineName(address account) external view returns(string){
+        return airlines[account].name;
+    }
+    function getAirlineAccount(address account) external view returns(address){
+        return airlines[account].account;
+    }
+    function getRegistrationStatus(address account) external view returns(bool){
+        return airlines[account].isRegistered;
+    }
+    function getAuthorizationStatus(address account) external view returns(bool){
+        return airlines[account].isAuthorized;
+    }
+    function getOperationalVote(address account) external view returns(bool){
+        return airlines[account].operationalVote;
+    }
+
+
 
     /**
     * @dev Sets contract operations on/off
@@ -117,12 +167,32 @@ contract FlightSuretyData {
     */
     function setOperatingStatus
                             (
-                                bool mode
+                                bool mode,
+                                address caller
                             )
                             external
+
                             isAuthorized(msg.sender)
+
+                            requireContractOwner
+
+
     {
-        operational = mode;
+        require(operational == airlines[caller].operationalVote, "Duplicate caller");
+        require(mode!=operational, "New mode must be different from existing mode");
+
+
+        if (authorizedAirlineCount < 4) {
+          operational = mode;
+        } else { //use multi-party consensus amount authorized airlines to reach 50% aggreement
+          changeOperatingStatusVotes = changeOperatingStatusVotes.add(1);
+          airlines[caller].operationalVote = mode;
+          if (changeOperatingStatusVotes >= (authorizedAirlineCount.div(2))) {
+            operational = mode;
+            changeOperatingStatusVotes = authorizedAirlineCount - changeOperatingStatusVotes;
+          }
+        }
+
     }
 
     /********************************************************************************************/
@@ -136,11 +206,65 @@ contract FlightSuretyData {
     */
     function registerAirline
                             (
+                              string name,
+                              address newAirline,
+                              address admin
                             )
                             external
+
                             view
                             requireIsOperational
+
+                            returns
+                            (
+                                bool success,
+                                uint256 authorizedAirlineNumber,
+                                uint256 votes
+                            )
+
     {
+
+
+
+      if (authorizedAirlineCount < 4) {
+        airlines[newAirline] = Airline({
+                    name: name,
+                    account: newAirline,
+                    isRegistered: true,
+                    isAuthorized: false,
+                    operationalVote: true
+                    });
+        emit RegisterAirline(newAirline);
+        return(true, authorizedAirlineCount, 1);
+      } else { //multiparty consensus
+        bool isDuplicate = false;
+        //better to use an owner parameter than msg.sender here?
+        if (multiCalls[newAirline][admin] == 1) {
+          isDuplicate = true;
+        }
+
+        require(!isDuplicate, "Caller has already called this function");
+        multiCalls[newAirline][admin] = 1;
+        voteCounter[newAirline] = voteCounter[newAirline].add(1);
+
+        if (voteCounter[newAirline] >= (authorizedAirlineCount.div(2))) {
+          airlines[newAirline] = Airline({
+                      name: name,
+                      account: newAirline,
+                      isRegistered: true,
+                      isAuthorized: true,
+                      operationalVote: true
+                      });
+
+          emit RegisterAirline(newAirline);
+
+          return(true, authorizedAirlineCount, voteCounter[newAirline]);
+        } else {
+          return(false, authorizedAirlineCount, voteCounter[newAirline]);
+        }
+
+      }
+
     }
     /**
     * @dev Buy insurance for a flight
@@ -178,6 +302,7 @@ contract FlightSuretyData {
     }
     /**
      *  @dev Transfers eligible payout funds to insuree
+
      */
 
     function pay () external payable requireIsOperational {
@@ -186,6 +311,7 @@ contract FlightSuretyData {
         credit[msg.sender] = 0;
         msg.sender.transfer(amountToReturn);
         emit Paid(msg.sender, amountToReturn);
+
     }
 
    /**
@@ -195,11 +321,33 @@ contract FlightSuretyData {
     */
     function fund
                             (
+                              address sender
                             )
                             public
                             payable
                             requireIsOperational
+
+                            //requireAuthorizedCaller (app contract)
+                            //isRegistered?
+                            //requireIsOperational
+                            //checkValue at least X ether
+                            //return change
+
     {
+        uint256 existingAmount = funds[sender];
+        uint256 totalAmount = existingAmount.add(msg.value);
+        funds[sender] = 0;
+
+        sender.transfer(totalAmount);
+
+        if (airlines[sender].isAuthorized == false) {
+            airlines[sender].isAuthorized = true;
+            authorizedAirlineCount = authorizedAirlineCount.add(1);
+            emit AuthorizeAirline(sender);
+        }
+        funds[sender] = totalAmount;
+
+
     }
 
     function getFlightKey
@@ -225,7 +373,7 @@ contract FlightSuretyData {
                             payable
                             requireIsOperational
     {
-        fund();
+        fund(msg.sender);
     }
 
 
