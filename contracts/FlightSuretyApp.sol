@@ -349,6 +349,9 @@ contract FlightSuretyApp {
       return flightSuretyData.registerAirline(name, newAirline, admin);
   }
 
+  function registerFLight(address airline, string flightId, uint256 timestamp) external view returns (bool){
+      return flightSuretyData.registerFlight(airline, flightId, timestamp);
+
   //utility function
     function isOperational() external view returns(bool) {
         return flightSuretyData.isOperational();

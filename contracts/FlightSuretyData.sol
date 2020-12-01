@@ -53,6 +53,7 @@ contract FlightSuretyData {
     event Bought(address buyer, bytes32 flightKey, uint256 amount);
     event Creditted(bytes32 flightKey);
     event Paid(address insuree, uint256 amount);
+    event RegisterFlight(flightIdentification);
 
 
     /**
@@ -265,6 +266,20 @@ contract FlightSuretyData {
       }
 
     }
+
+    function registerFlight (address airline, string flightId, uint256 timestamp) external isAuthorized requireIsOperational {
+        require(airlines[airline].isRegistered, "Airline does not exists");
+        flights[flightId] = Flight({
+            isRegistered: true,
+            statusCode: 0,
+            updatedTimestamp: timestamp,
+            airline: airline,
+            id: flightId,
+            hasBeenInsured: false
+        });
+
+        emit RegisterFlight(flightId);   // Log airline registration event
+   }
     /**
     * @dev Buy insurance for a flight
     */
