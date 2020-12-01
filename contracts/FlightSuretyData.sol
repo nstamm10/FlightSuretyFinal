@@ -37,7 +37,7 @@ contract FlightSuretyData {
     mapping (address => mapping(address => uint8)) private multiCalls;
     address[] multiCallsArray = new address[](0);   //array of addresses that have called the registerFlight function
 
-    mapping(address => uint256) funds;
+    mapping(address => uint256) funds;                // Mapping to store the funds contributed by the airline. The minnimum contribution to get authorized is 10 ether
     mapping(address => Airline) public airlines;      // Mapping for storing employees. Question: Does this contract have to inheret from the app contract in order to use a mapping that maps to an Airline type? (airline type is stored in the app contract, maybe this will have to change)
     mapping(address => uint256) private authorizedAirlines;   // Mapping for airlines authorized
 
@@ -116,8 +116,8 @@ contract FlightSuretyData {
         _;
     }
 
-    modifier isAuthorized(address airline) {
-        require(airlines[airline].isAuthorized, "Airline is not authorized");
+    modifier requireIsCallerAuthorized(address admin) {
+        require(airlines[admin].isAuthorized, "Airline is not authorized");
 
         _;
     }
@@ -144,6 +144,9 @@ contract FlightSuretyData {
 
     function getAirlineName(address account) external view returns(string){
         return airlines[account].name;
+    }
+    function getAuthorizedAirlineCount() external view returns(uint256) {
+        return authorizedAirlineCount;
     }
     function getAirlineAccount(address account) external view returns(address){
         return airlines[account].account;
@@ -172,7 +175,7 @@ contract FlightSuretyData {
                             )
                             external
 
-                            isAuthorized(msg.sender)
+                            requireIsCallerAuthorized(caller)
 
                             requireContractOwner
 
@@ -211,9 +214,8 @@ contract FlightSuretyData {
                               address admin
                             )
                             external
-                            view
                             requireIsOperational
-
+                            requireIsCallerAuthorized(admin)
                             returns
                             (
                                 bool success,
@@ -222,8 +224,8 @@ contract FlightSuretyData {
                             )
 
     {
-
-
+      require(!airlines[newAirline].isRegistered, "New Airline is already registered");
+      require(airlines[admin].isRegistered, "Admin Airline is not registered");
 
       if (authorizedAirlineCount < 4) {
         airlines[newAirline] = Airline({
@@ -320,24 +322,22 @@ contract FlightSuretyData {
     */
     function fund
                             (
-                              address sender
+                              address sender,
+                              uint256 value
                             )
                             public
                             payable
                             requireIsOperational
 
-                            //requireAuthorizedCaller (app contract)
-                            //isRegistered?
-                            //requireIsOperational
-                            //checkValue at least X ether
-                            //return change
-
     {
+      require(value >= 10 ether , "Inadaquate funds");
+      require(airlines[sender].isRegistered, "Sending account must be registered before it can be funded");
+
+
         uint256 existingAmount = funds[sender];
         uint256 totalAmount = existingAmount.add(msg.value);
         funds[sender] = 0;
-
-        sender.transfer(totalAmount);
+        msg.sender.transfer(msg.value); //their code has the totalAmount being transferred to the contract account. Why?
 
         if (airlines[sender].isAuthorized == false) {
             airlines[sender].isAuthorized = true;
@@ -372,7 +372,7 @@ contract FlightSuretyData {
                             payable
                             requireIsOperational
     {
-        fund(msg.sender);
+        fund(msg.sender, msg.maxValue);
     }
 
 
