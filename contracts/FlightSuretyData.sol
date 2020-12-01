@@ -322,15 +322,14 @@ contract FlightSuretyData {
     */
     function fund
                             (
-                              address sender,
-                              uint256 value
+                              address sender
                             )
                             public
                             payable
                             requireIsOperational
 
     {
-      require(value >= 10 ether , "Inadaquate funds");
+      require(msg.value >= 10 ether , "Inadaquate funds");
       require(airlines[sender].isRegistered, "Sending account must be registered before it can be funded");
 
 
@@ -372,7 +371,7 @@ contract FlightSuretyData {
                             payable
                             requireIsOperational
     {
-        fund(msg.sender, msg.maxValue);
+        fund(msg.sender);
     }
 
 

@@ -351,8 +351,8 @@ contract FlightSuretyApp {
   function getAuthorizedAirlineCount() external view returns(uint256) {
       return flightSuretyData.getAuthorizedAirlineCount();
   }
-  function fund() public payable {
-      return flightSuretyData.fund(msg.sender, msg.value);
+  function fund(address owner) public payable {
+      flightSuretyData.fund.value(msg.value)(owner);
   }
 
   //utility function
@@ -376,5 +376,5 @@ contract FlightSuretyData {
     function isOperational() external view returns(bool){}
     function registerAirline(string name, address newAirline, address admin) external returns(bool, uint256, uint256){}
     function getAuthorizedAirlineCount() external view returns(uint256){}
-    function fund(address owner, uint256 value) public payable {}
+    function fund(address owner) public payable {}
 }
