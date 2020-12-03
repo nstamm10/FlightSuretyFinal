@@ -102,6 +102,7 @@ contract('Flight Surety Tests', async (accounts) => {
       TruffleAssert.eventEmitted(buy, 'Bought');
 
   });
+  
   it('americanAirline "American Airlines" can be funded using fund() function', async function() {
 
     let americanAirline = accounts[3];
