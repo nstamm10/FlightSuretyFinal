@@ -20,7 +20,7 @@ contract('Flight Surety Tests', async (accounts) => {
   it( 'check that default airline has registered correctly upon deployment of contracts', async function() {
 
     //get field of default airline at address config.firstAirline
-    let firstAirline = config.firstAirline;
+    const firstAirline = config.firstAirline;
 
     let nameDefault = await config.flightSuretyApp.getAirlineName(firstAirline);
     let accountDefault = await config.flightSuretyApp.getAirlineAccount(firstAirline);
@@ -34,8 +34,35 @@ contract('Flight Surety Tests', async (accounts) => {
     assert.equal(isRegisteredDefault, true, "Incorrect registration status of default airline");
     assert.equal(isAuthorizedDefault, true, "Incorrect authorization status of default airline");
     assert.equal(operationalVoteDefault, true, "Incorrect operational vote of default airline");
+/*
+    //assign new airline address
+    let americanAirline = accounts[2];
+    //register an Airline and check that this function worked correctly
+    await config.flightSuretyApp.registerAirline.sendTransaction("American Airlines", americanAirline, firstAirline, {from: firstAirline});
+
+    //check all 5 fields of new airline
+    let name = await config.flightSuretyApp.getAirlineName(americanAirline);
+    let account = await config.flightSuretyApp.getAirlineAccount(americanAirline);
+    let isRegistered = await config.flightSuretyApp.getRegistrationStatus(americanAirline);
+    let isAuthorized = await config.flightSuretyApp.getAuthorizationStatus(americanAirline);
+    let operationalVote = await config.flightSuretyApp.getOperationalVote(americanAirline);
+    let list = await config.flightSuretyApp.getAuthorizedAirlineCount();
+
+    assert.equal(name, "American Airlines", name.toString());
+    assert.equal(account, americanAirline, "Incorrect account of registered airline 1");
+    assert.equal(isRegistered, true, "Incorrect registration status of registered airline 1");
+    assert.equal(isAuthorized, false, "Incorrect authorization status of registered airline 1");
+    assert.equal(operationalVote, true, "Incorrect operational vote of registered airline 1");
+    assert.equal(list.toString() === "1", true, "Incorrect authorized airline count of ${list}");
+
+    await config.flightSuretyApp.fund.sendTransaction({from: firstAirline, value: 1000000000000000000 });
+*/
 
   });
+
+
+
+
 
   //THIS WORKS GREAT
   it( 'correct initial isOperational() value', async function() {
@@ -54,34 +81,59 @@ contract('Flight Surety Tests', async (accounts) => {
   it('register an airline and check if fields register correctly', async function() {
 
     //assign airline vairables
-    let newAirline = accounts[3];
-    let airline = config.firstAirline; // should be already authorized as a participating airline
+    const americanAirline = accounts[3];
+    const firstAirline = config.firstAirline; // should be already authorized as a participating airline
 
     //This should work and return true, 1, 1
-    let register = await config.flightSuretyApp.registerAirline.sendTransaction("American Airlines", newAirline, airline);
+    await config.flightSuretyApp.registerAirline.sendTransaction("American Airlines", americanAirline, firstAirline, {from: firstAirline});
 
     //check all 5 fields of new airline
-    let name = await config.flightSuretyApp.getAirlineName(newAirline);
-    let account = await config.flightSuretyApp.getAirlineAccount(newAirline);
-    let isRegistered = await config.flightSuretyApp.getRegistrationStatus(newAirline);
-    let isAuthorized = await config.flightSuretyApp.getAuthorizationStatus(newAirline)
-    let operationalVote = await config.flightSuretyApp.getOperationalVote(newAirline);
+    let name = await config.flightSuretyApp.getAirlineName(americanAirline);
+    let account = await config.flightSuretyApp.getAirlineAccount(americanAirline);
+    let isRegistered = await config.flightSuretyApp.getRegistrationStatus(americanAirline);
+    let isAuthorized = await config.flightSuretyApp.getAuthorizationStatus(americanAirline);
+    let operationalVote = await config.flightSuretyApp.getOperationalVote(americanAirline);
+    let list = await config.flightSuretyApp.getAuthorizedAirlineCount();
 
     assert.equal(name, "American Airlines", name.toString());
-    assert.equal(account, newAirline, "Incorrect account of registered airline 1");
+    assert.equal(account, americanAirline, "Incorrect account of registered airline 1");
     assert.equal(isRegistered, true, "Incorrect registration status of registered airline 1");
     assert.equal(isAuthorized, false, "Incorrect authorization status of registered airline 1");
     assert.equal(operationalVote, true, "Incorrect operational vote of registered airline 1");
+    assert.equal(list.toString() === "1", true, "Incorrect authorized airline count of ${list}");
 
+    //check that registerAirline function is returning the correct three fields for this particular case -- NOT WORKING YET
+    //assert.equal(register[0], true, register);
+    //assert.equal(register[1].toString() === "1", true, "Incorrect number of Authorized Airlines");
+    //assert.equal(register[2].toString() === "1", true, "Incorrect number of votes");
+
+  });
+
+
+  it('americanAirline "American Airlines" can be funded using fund() function', async function() {
     //check that registerAirline function is returning the correct three fields for this particular case
     //assert.equal(register, true, register);
     //assert.equal(register[1].toString() === "1", true, "Incorrect number of Authorized Airlines");
     //assert.equal(register[2].toString() === "1", true, "Incorrect number of votes");
 
 
+    let americanAirline = accounts[3];
+    let firstAirline = config.firstAirline; // should be already authorized as a participating airline
 
+
+    //call the fund transaction from both firstAirline which is already authorized and from americanAirline which is registered but not authorized
+    await config.flightSuretyApp.fund.sendTransaction(firstAirline, {from: firstAirline, value: 10 }); //use to field
+  //  await config.flightSuretyApp.fund.sendTransaction({from: americanAirline, "value": 10 });
+
+    //American Airline should now be authorized
+    let isAuthorized = await config.flightSuretyApp.getAuthorizationStatus(americanAirline);
+    assert.equal(isAuthorized, true, "Incorrect authorization status of registered airline 1");
 
   });
+
+
+
+
 
   it( 'isOperational function returns default isOperational() value', async function() {
 
