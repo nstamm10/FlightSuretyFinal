@@ -116,7 +116,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
 
     //call the fund transaction from both firstAirline which is already authorized and from americanAirline which is registered but not authorized
-    await config.flightSuretyApp.fund.sendTransaction(firstAirline, {from: firstAirline, value: 10000000000000000000 }); //use to field
+    await config.flightSuretyApp.fund.sendTransaction(firstAirline, {from: firstAirline, value: 10 }); //use to field
   //  await config.flightSuretyApp.fund.sendTransaction({from: americanAirline, "value": 10 });
 
     //American Airline should now be authorized
