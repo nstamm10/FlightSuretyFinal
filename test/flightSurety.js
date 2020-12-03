@@ -109,7 +109,13 @@ contract('Flight Surety Tests', async (accounts) => {
 
   });
 
+
   it('americanAirline "American Airlines" can be funded using fund() function', async function() {
+    //check that registerAirline function is returning the correct three fields for this particular case
+    //assert.equal(register, true, register);
+    //assert.equal(register[1].toString() === "1", true, "Incorrect number of Authorized Airlines");
+    //assert.equal(register[2].toString() === "1", true, "Incorrect number of votes");
+
 
     let americanAirline = accounts[3];
     let firstAirline = config.firstAirline; // should be already authorized as a participating airline
@@ -146,6 +152,26 @@ contract('Flight Surety Tests', async (accounts) => {
       let buy = await config.flightSuretyData.buy(airline, flight, time, buyAmount.toString(), {from: consumer, value: buyAmount.toString()});
 
       TruffleAssert.eventEmitted(buy, 'Bought');
+
+  });
+
+  it('americanAirline "American Airlines" can be funded using fund() function', async function() {
+
+    let americanAirline = accounts[3];
+    let firstAirline = config.firstAirline; // should be already authorized as a participating airline
+
+
+    //call the fund transaction from both firstAirline which is already authorized and from americanAirline which is registered but not authorized
+    await config.flightSuretyApp.fund.sendTransaction(firstAirline, {
+                                                      "from": firstAirline,
+                                                      "value": 10000000000000000000,
+                                                      "gas":4712388,
+                                                      "gasPrice":100000000000}); //use to field
+  //  await config.flightSuretyApp.fund.sendTransaction({from: americanAirline, "value": 10 });
+
+    //American Airline should now be authorized
+    let isAuthorized = await config.flightSuretyApp.getAuthorizationStatus(americanAirline);
+    assert.equal(isAuthorized, true, "Incorrect authorization status of registered airline 1");
 
   });
 
