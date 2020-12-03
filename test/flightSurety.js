@@ -102,6 +102,21 @@ contract('Flight Surety Tests', async (accounts) => {
       TruffleAssert.eventEmitted(buy, 'Bought');
 
   });
+  it('americanAirline "American Airlines" can be funded using fund() function', async function() {
+
+    let americanAirline = accounts[3];
+    let firstAirline = config.firstAirline; // should be already authorized as a participating airline
+
+
+    //call the fund transaction from both firstAirline which is already authorized and from americanAirline which is registered but not authorized
+    await config.flightSuretyApp.fund.sendTransaction(firstAirline, {from: firstAirline, value: 10000000000000000000 }); //use to field
+  //  await config.flightSuretyApp.fund.sendTransaction({from: americanAirline, "value": 10 });
+
+    //American Airline should now be authorized
+    let isAuthorized = await config.flightSuretyApp.getAuthorizationStatus(americanAirline);
+    assert.equal(isAuthorized, true, "Incorrect authorization status of registered airline 1");
+
+  });
 
   it('setOperatingStatus requires authorizedAirline to call function', async function() {
 
