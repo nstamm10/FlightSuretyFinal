@@ -336,7 +336,7 @@ contract FlightSuretyData {
         uint256 existingAmount = funds[sender];
         uint256 totalAmount = existingAmount.add(msg.value);
         funds[sender] = 0;
-        msg.sender.transfer(msg.value); //their code has the totalAmount being transferred to the contract account. Why?
+        sender.transfer(msg.value); //their code has the totalAmount being transferred to the contract account. Why?
 
         if (airlines[sender].isAuthorized == false) {
             airlines[sender].isAuthorized = true;
