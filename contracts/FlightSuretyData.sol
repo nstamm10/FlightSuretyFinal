@@ -329,7 +329,7 @@ contract FlightSuretyData {
                             requireIsOperational
 
     {
-        require(msg.value >= 10, "Inadaquate funds");
+        require(msg.value >= 10 ether, "Inadaquate funds");
         require(airlines[sender].isRegistered, "Sending account must be registered before it can be funded");
 
 
