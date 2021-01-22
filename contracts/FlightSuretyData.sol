@@ -40,6 +40,9 @@ contract FlightSuretyData {
     mapping(address => uint256) funds;                // Mapping to store the funds contributed by the airline. The minnimum contribution to get authorized is 10 ether
     mapping(address => Airline) public airlines;      // Mapping for storing employees. Question: Does this contract have to inheret from the app contract in order to use a mapping that maps to an Airline type? (airline type is stored in the app contract, maybe this will have to change)
     mapping(address => uint256) private authorizedAirlines;   // Mapping for airlines authorized
+    mapping(address => uint8) authorizedCaller; //mapping that stores the app contract addresses that
+                                                //are authorized to call the data contract. If authorized, the mapping[address]
+                                                //should equal 1
 
     Insurance[] private insurance;
     mapping(address => uint256) private credit;
@@ -49,6 +52,9 @@ contract FlightSuretyData {
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
+
+    event AuthorizedCaller(address caller);
+    event DeAuthorizedCaller(address caller);
 
     event Bought(address buyer, bytes32 flightKey, uint256 amount);
     event Creditted(bytes32 flightKey);
@@ -126,6 +132,23 @@ contract FlightSuretyData {
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
 
+
+        /* authorize caller */
+    function authorizeCaller(address _caller) public onlyOwner returns(bool)
+    {
+        authorizedCaller[_caller] = 1;
+        emit AuthorizedCaller(_caller);
+        return true;
+    }
+
+
+    /* deauthorize caller */
+    function deAuthorizeCaller(address _caller) public onlyOwner returns(bool)
+    {
+        authorizedCaller[_caller] = 0;
+        emit DeAuthorizedCaller(_caller);
+        return true;
+    }
     /**
     * @dev Get operating status of contract
     *
